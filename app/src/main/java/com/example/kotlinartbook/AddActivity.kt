@@ -46,25 +46,33 @@ class AddActivity : AppCompatActivity() {
 
         val artName = artNameText.text.toString()
         val artistName = artistNameText.text.toString()
-        val year = yearText.text.toString().toIntOrNull()
+        val year = yearText.text.toString()
 
         if (selectedBitmap != null){
             val smallBitmapImage= smallBitmap(selectedBitmap!!,300)
             val outputStream = ByteArrayOutputStream()
             smallBitmapImage?.compress(Bitmap.CompressFormat.PNG, 50, outputStream)
             val byteArray = outputStream.toByteArray()
+
+            try {
+                val database=this.openOrCreateDatabase("Book",Context.MODE_PRIVATE,null)
+                database.execSQL("CREATE TABLE IF NOT EXISTS arts(id INTEGER PRIMERY KEY, artname VARCHAR,artistname VARCHAR, year VARCHAR, image BLOB)")
+
+                val sqlString="INSERT INTO arts(artname,artistname,year,image) VALUES (?,?,?,?)"
+                val statement= database.compileStatement(sqlString)
+                statement.bindString(1,artName)
+                statement.bindString(2,artistName)
+                statement.bindString(3,year)
+                statement.bindBlob(4,byteArray)
+
+                statement.execute()
+            }catch (e:Exception){
+                e.printStackTrace()
+            }
+            finish()
         }else{
             Toast.makeText(applicationContext,"Image seciniz",Toast.LENGTH_SHORT )
         }
-
-
-
-//        val intent = Intent(this, MainActivity::class.java)
-//        intent.putExtra("artname", artName)
-//        intent.putExtra("artistname", artistName)
-//        intent.putExtra("year", year)
-//
-//        startActivity(intent)
 
     }
 
