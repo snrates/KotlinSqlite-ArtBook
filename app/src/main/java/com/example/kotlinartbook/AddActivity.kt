@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
@@ -14,8 +15,10 @@ import android.provider.MediaStore
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat.*
+import java.io.ByteArrayOutputStream
 import java.lang.Exception
 import java.lang.reflect.Executable
 import androidx.core.content.ContextCompat as ContextCompat
@@ -23,6 +26,8 @@ import androidx.core.content.ContextCompat as ContextCompat
 
 class AddActivity : AppCompatActivity() {
     lateinit var selectedPicture: Uri
+    var selectedBitmap: Bitmap? = null
+
     lateinit var imageView: ImageView
     lateinit var artNameText: EditText
     lateinit var artistNameText: EditText
@@ -32,38 +37,67 @@ class AddActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add)
 
         imageView = findViewById(R.id.imageView)
-        artNameText=findViewById(R.id.artNameText)
-        artistNameText=findViewById(R.id.artistNameText)
-        yearText=findViewById(R.id.yearText)
+        artNameText = findViewById(R.id.artNameText)
+        artistNameText = findViewById(R.id.artistNameText)
+        yearText = findViewById(R.id.yearText)
     }
 
     fun save(view: View) {
 
-        val artName=artNameText.text.toString()
-        val artistName=artistNameText.text.toString()
-        val year=yearText.text.toString().toIntOrNull()
+        val artName = artNameText.text.toString()
+        val artistName = artistNameText.text.toString()
+        val year = yearText.text.toString().toIntOrNull()
 
-        val intent= Intent(this,MainActivity::class.java)
+        if (selectedBitmap != null){
+            val smallBitmapImage= smallBitmap(selectedBitmap!!,300)
+            val outputStream = ByteArrayOutputStream()
+            smallBitmapImage?.compress(Bitmap.CompressFormat.PNG, 50, outputStream)
+            val byteArray = outputStream.toByteArray()
+        }else{
+            Toast.makeText(applicationContext,"Image seciniz",Toast.LENGTH_SHORT )
+        }
 
-        intent.putExtra("artname",artName)
-        intent.putExtra("artistname",artistName)
-        intent.putExtra("year",year)
 
-        startActivity(intent)
+
+//        val intent = Intent(this, MainActivity::class.java)
+//        intent.putExtra("artname", artName)
+//        intent.putExtra("artistname", artistName)
+//        intent.putExtra("year", year)
+//
+//        startActivity(intent)
 
     }
 
     fun selectImage(view: View) {//this, Manifest.permisson.RREAD_EXTERNAL_STORAGE-> izin erişim işleri için
 
-        if (ContextCompat.checkSelfPermission(AddActivity@this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {// Kullanıcı erişim izni sorgusu
-            ActivityCompat.requestPermissions(AddActivity@this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)//Erişim izni yoksa izin alınıyor
+        if (ContextCompat.checkSelfPermission(AddActivity@ this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {// Kullanıcı erişim izni sorgusu
+            ActivityCompat.requestPermissions(AddActivity@ this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)//Erişim izni yoksa izin alınıyor
         } else {
             val intentToGallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             startActivityForResult(intentToGallery, 2)
         }
     }
 
-    override fun onRequestPermissionsResult(//İzin istedikten sonra direk galeri açılması
+    fun smallBitmap(image: Bitmap, size: Int): Bitmap {
+
+        var width = image.width
+        var height = image.height
+
+        val bitmapRatio: Double = width.toDouble() / height.toDouble()
+        if (bitmapRatio > 1) {  // yatay ayarlama
+            width = size
+            val scalefHeight=width/bitmapRatio
+            height = scalefHeight.toInt()
+        } else {  //Dikey ayarlama
+            height = size
+            val scaleWidth=height * bitmapRatio
+            width = scaleWidth.toInt()
+        }
+
+        return Bitmap.createScaledBitmap(image, width, height, true)
+    }
+
+    override fun onRequestPermissionsResult( //İzin istedikten sonra direk galeri açılması
             requestCode: Int,
             permissions: Array<out String>,
             grantResults: IntArray) {
@@ -86,15 +120,15 @@ class AddActivity : AppCompatActivity() {
                 if (selectedPicture != null) {
                     if (Build.VERSION.SDK_INT >= 28) {
                         val source = ImageDecoder.createSource(this.contentResolver, selectedPicture)
-                        val bitmap = ImageDecoder.decodeBitmap(source)
-                        imageView.setImageBitmap(bitmap)
+                        selectedBitmap = ImageDecoder.decodeBitmap(source)
+                        imageView.setImageBitmap(selectedBitmap)
 
                     } else {
-                        val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedPicture)
-                        imageView.setImageBitmap(bitmap)
+                        selectedBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, selectedPicture)
+                        imageView.setImageBitmap(selectedBitmap)
                     }
                 }
-            }catch (ex: Exception){
+            } catch (ex: Exception) {
                 println(ex)
             }
 
