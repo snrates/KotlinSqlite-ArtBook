@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import java.lang.Exception
@@ -42,6 +43,16 @@ class MainActivity : AppCompatActivity() {
         }catch (e:Exception){
             e.printStackTrace()
         }
+
+        listView.onItemClickListener= AdapterView.OnItemClickListener { parent, view, position, id ->
+
+            val intent=Intent(this,AddActivity::class.java)
+
+            intent.putExtra("info","old")
+            intent.putExtra("id",artIdList[position])
+
+            startActivity(intent)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -56,6 +67,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == R.id.add_art_item){
             val intent= Intent(this,AddActivity::class.java)
+            intent.putExtra("info","new")
             startActivity(intent)
         }
         return super.onOptionsItemSelected(item)
